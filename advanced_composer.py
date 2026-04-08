@@ -17,6 +17,16 @@ from fractal_melody_generator import (
 )
 from harmony_engine import HarmonyParams, HarmonyEngine, HarmonyStyle
 
+# Import split-out modules (these types are also defined locally for backward compat)
+from musical_types import (
+    MusicalForm, Articulation, TextureType, DevelopmentType,
+    PerformanceDirective, Note, Motif, Section, Form,
+    CreativeComposerParams
+)
+from motif_development import MotifDevelopment as _MotifDevelopment
+from voice_leading import VoiceLeading as _VoiceLeading
+from music_visualization import Visualization as _Visualization
+
 # Musical Enums and Constants
 class MusicalForm(Enum):
     SONATA = "sonata"
