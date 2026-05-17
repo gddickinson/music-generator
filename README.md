@@ -207,3 +207,6 @@ If you use this project in your research, please cite:
   url = {https://github.com/yourusername/creative-music-generator}
 }
 ```
+
+---
+*Built with AI assistance from [Claude (Anthropic)](https://claude.com/).*
