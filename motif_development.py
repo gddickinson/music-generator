@@ -111,8 +111,9 @@ class MotifDevelopment:
         if not motif.notes:
             return motif
 
+        # add_motif_to_midi already advances through the motif, so every note is
+        # offset by the same shift (not by its running onset).
         new_notes = []
-        current_time = shift
 
         for note in motif.notes:
             new_note = Note(
@@ -121,11 +122,10 @@ class MotifDevelopment:
                 velocity=note.velocity,
                 articulation=note.articulation,
                 performance=PerformanceDirective(
-                    timing_offset=current_time
+                    timing_offset=shift
                 )
             )
             new_notes.append(new_note)
-            current_time += note.duration
 
         return Motif(
             notes=new_notes,

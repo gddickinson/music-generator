@@ -54,3 +54,12 @@ def test_minimalist_form_uses_melody_pitches():
     base = composer.form.sections[0].motifs[0]
     assert len(base.notes) == 8
     assert all(isinstance(n.pitch, int) and 60 <= n.pitch < 84 for n in base.notes)
+
+
+def test_phase_shift_offsets_by_shift_only():
+    """phase_shift stored the running onset as timing_offset; add_motif_to_midi adds the
+    running time again, so shifted notes landed at 2x their onset (gaps, not a phase)."""
+    motif = Motif(notes=[Note(pitch=60 + i, duration=0.25) for i in range(4)],
+                  emotional_intent=EmotionalStyle.PEACEFUL)
+    shifted = MotifDevelopment.phase_shift(motif, 0.125)
+    assert [n.performance.timing_offset for n in shifted.notes] == [0.125] * 4
