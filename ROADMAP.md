@@ -6,7 +6,7 @@ A sophisticated algorithmic composition system with 6 Python files implementing 
 ## Short-term Improvements
 - [x] Add `requirements.txt` — needs `numpy`, `matplotlib`, `midiutil`, `scipy`, `networkx`, `tqdm`
 - [ ] Add `__init__.py` and reorganize into a package: `music_generator/` with submodules
-- [x] Rename `multi-fractal-music.py` to `multi_fractal_music.py` (hyphen prevents Python import)
+- [x] Rename `multi-fractal-music.py` to `multi_fractal_music.py` (hyphen prevents Python import); the identical hyphenated copy is still in the repo
 - [ ] Add CLI interface: `python -m music_generator --form sonata --key C --tempo 120 --output my_piece.mid`
 - [x] Add unit tests for `harmony_engine.py` — verify voice leading rules, chord voicing, consonance scoring
 - [x] Add unit tests for `fractal_melody_generator.py` — test scale mapping, mode application
@@ -35,8 +35,8 @@ A sophisticated algorithmic composition system with 6 Python files implementing 
 - [ ] `main_composer.py` vs `advanced_composer.py` — unclear which is canonical; consolidate or document
 - [x] `multi-fractal-music.py` hyphenated name breaks importability
 - [ ] No package structure — all 6 files in project root
-- [x] Generated output files (`creative_composition.mid`, `form_structure.png`, `tension_graph.png`) are in the repo — add to `.gitignore`
+- [ ] Generated output files (`creative_composition.mid`, `form_structure.png`, `tension_graph.png`) are in the repo — add to `.gitignore` (not done: there is no ignore rule and the files are tracked; README uses them as the example output)
 - [x] No tests whatsoever — musical output is hard to test but harmony rules and scale math are deterministic
 - [ ] Import chain (`advanced_composer.py` imports from `fractal_melody_generator.py` and `harmony_engine.py`) is fragile without proper packaging
 - [ ] `musical_genetics.py` population management may have performance issues with large populations — needs profiling
-- [x] `advanced_composer.py` exceeded 500 lines — split into `musical_types.py`, `motif_development.py`, `voice_leading.py`, `music_visualization.py`
+- [ ] `advanced_composer.py` exceeded 500 lines — split into `musical_types.py`, `motif_development.py`, `voice_leading.py`, `music_visualization.py` (modules created, but `advanced_composer.py` still defines its own copies and is ~1700 lines)

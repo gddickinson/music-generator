@@ -48,7 +48,7 @@ Implements genetic algorithms for musical development:
 - Musical crossover and mutation
 - Population management
 
-### multi-fractal-music.py
+### multi_fractal_music.py
 Extends fractal generation to multiple musical parameters:
 - Multiple fractal types (Mandelbrot, Julia, Koch, etc.)
 - Independent control of melody, harmony, and rhythm
@@ -58,13 +58,13 @@ Extends fractal generation to multiple musical parameters:
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/creative-music-generator.git
-cd creative-music-generator
+git clone https://github.com/gddickinson/music-generator.git
+cd music-generator
 ```
 
 2. Install required dependencies:
 ```bash
-pip install numpy matplotlib midiutil scipy networkx tqdm
+pip install -r requirements.txt
 ```
 
 ## Usage
@@ -159,22 +159,19 @@ The system generates various visualizations:
 
 ## Output Formats
 
-- MIDI files (.mid)
-- Optional WAV audio (.wav)
+- MIDI files (.mid), from all three entry points
+- WAV audio (.wav) from `main_composer.py` (`generate_wav=True`) and `multi_fractal_music.py`;
+  `CreativeComposer` (`advanced_composer.py`) writes MIDI only and rejects `generate_wav=True`
 - Visualization images (.png)
-- Musical analysis data
 
 ## Examples
 
-The repository includes example compositions in the `examples` directory, demonstrating different forms and styles:
-- Sonata form example
-- Process music example
-- Arch form example
-- Moment form example
+The repository includes one example output of `advanced_composer.py` (arch form):
+`creative_composition.mid`, with its `form_structure.png` and `tension_graph.png`.
 
 ## Contributing
 
-Contributions are welcome! Please read `CONTRIBUTING.md` for details on our code of conduct and the process for submitting pull requests.
+Contributions are welcome: please open an issue or a pull request.
 
 ## License
 
@@ -202,9 +199,9 @@ If you use this project in your research, please cite:
 ```
 @software{creative_music_generator,
   title = {Creative Music Generator},
-  author = {[Your Name]},
-  year = {2024},
-  url = {https://github.com/yourusername/creative-music-generator}
+  author = {Dickinson, George},
+  year = {2025},
+  url = {https://github.com/gddickinson/music-generator}
 }
 ```
 
