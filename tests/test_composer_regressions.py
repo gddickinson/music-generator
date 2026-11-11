@@ -30,3 +30,18 @@ def test_every_form_writes_a_midi_file(form, seed):
     buf = io.BytesIO()
     midi.writeFile(buf)
     assert buf.getvalue().startswith(b"MThd")
+
+
+def test_melody_generator_follows_emotion_changes():
+    """generate_melody used the emotion given at construction even after params.emotion
+    changed, so every theme of a composition used the first emotion's fractal."""
+    gen = FractalMelodyGenerator(MelodyParams(mode=MusicalMode.IONIAN, emotion=EmotionalStyle.PEACEFUL))
+    np.random.seed(0)
+    peaceful = gen.generate_melody()
+    gen.params.emotion = EmotionalStyle.ENERGETIC
+    np.random.seed(0)
+    energetic = gen.generate_melody()
+    fresh = FractalMelodyGenerator(MelodyParams(mode=MusicalMode.IONIAN, emotion=EmotionalStyle.ENERGETIC))
+    np.random.seed(0)
+    assert energetic == fresh.generate_melody()
+    assert energetic != peaceful

@@ -102,8 +102,12 @@ class FractalMelodyGenerator:
                 'fractal_params': {'zoom': 0.7, 'offset': (0.1, 0.2)}
             }
         }
-        
-        self.current_params = self.emotional_params[self.params.emotion]
+
+
+    @property
+    def current_params(self) -> Dict:
+        """Parameters of the current emotion (follows later changes to params.emotion)."""
+        return self.emotional_params[self.params.emotion]
     
     def mandelbrot(self, h: int, w: int, max_iter: int) -> np.ndarray:
         """Generate Mandelbrot set with emotional parameters"""
