@@ -845,9 +845,9 @@ class CreativeComposer:
         transitions = []
 
         # Create base motif for phasing
-        base_motif = self.fractal_generator.generate_melody()
+        melody, _, _ = self.fractal_generator.generate_melody()
         base_motif = Motif(
-            notes=[Note(pitch=p, duration=0.25) for p in base_motif[:8]],  # Keep it short for phasing
+            notes=[Note(pitch=p, duration=0.25) for p in melody[:8]],  # Keep it short for phasing
             emotional_intent=self.params.emotional_journey[0]
         )
 

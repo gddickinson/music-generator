@@ -45,3 +45,12 @@ def test_melody_generator_follows_emotion_changes():
     np.random.seed(0)
     assert energetic == fresh.generate_melody()
     assert energetic != peaceful
+
+
+def test_minimalist_form_uses_melody_pitches():
+    """initialize_minimalist_form sliced the (melody, timing, velocities) tuple instead of the
+    melody, so its 'notes' had lists as pitches (only 3 notes, pitch 0 among them)."""
+    composer, _ = compose(MusicalForm.MINIMALIST, 0)
+    base = composer.form.sections[0].motifs[0]
+    assert len(base.notes) == 8
+    assert all(isinstance(n.pitch, int) and 60 <= n.pitch < 84 for n in base.notes)
