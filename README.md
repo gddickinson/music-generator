@@ -101,6 +101,39 @@ midi, audio = composer.generate_composition()
 composer.save_composition(midi, audio, "my_composition")
 ```
 
+## Web interface
+
+**Live site:** https://gddickinson.github.io/music-generator/ (published from `main` by GitHub Actions)
+
+The composer runs in the browser: `advanced_composer.py` and `fractal_melody_generator.py` are ported to JavaScript
+(`web/static/composer_engine.js` and friends), together with CPython's `random`, NumPy's legacy random generator and
+MIDIUtil's writer, so the same settings and seed give **the same notes and the same MIDI bytes** as the Python
+(checked by a node test on 28 pieces and live on the Verify page).
+
+- **Compose**: form, mode, key, tempo, sections, voices, seed and the emotional journey; piano roll with section
+  emotions and tension, playback (WebAudio, after a click), MIDI download (identical to the Python file), WAV rendered
+  in the browser, and the Python snippet that reproduces the piece.
+- **Fractal melodies**: the Mandelbrot region each emotion reads and the melody it yields.
+- **Verify**: pieces composed by the Python program compared with the browser engine; the local app can also run the
+  Python on any settings.
+
+| Compose | Fractal melodies | Verify |
+|---|---|---|
+| ![Compose page](docs/img/compose.png) | ![Fractal melodies page](docs/img/fractal.png) | ![Verify page](docs/img/verify.png) |
+
+### Run the web app
+
+```bash
+pip install -r requirements-web.txt
+python run_web.py                 # http://127.0.0.1:8166
+python -m pytest -q tests/        # web, regression and JS-vs-Python checks (needs node for the JS tests)
+python scripts/build_static.py    # static site in site/
+```
+
+To reproduce a piece from the site in Python, seed both generators before building the composer
+(`random.seed(s); np.random.seed(s)`); the Compose page shows the exact snippet. Python 3.12 or later is needed for
+bit-identical timing (its `sum()` is compensated). `scripts/make_fixtures.py` regenerates the JS test fixtures.
+
 ## Musical Theory and Implementation
 
 ### Fractal Melody Generation

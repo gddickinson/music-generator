@@ -1,0 +1,30 @@
+/* Music Generator accents (amber / rose / sky) and page styles. */
+:root { --accent:#ffb347; --accent2:#ff5fa2; --accent3:#5fd4ff; --glow:rgba(255,179,71,.14); }
+button, .btn, .seg button.on { color:#1a0f00; }
+.herosplit { align-items:center; }
+.fig { margin:0; }
+.fig canvas { width:100%; height:auto; display:block; border:1px solid var(--line); border-radius:6px; background:#05060c; }
+.ctlgrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:4px 14px; align-items:end; }
+.ctlgrid label { margin-top:6px; }
+.journey { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:6px 0; }
+.chip { display:inline-flex; align-items:center; gap:4px; font:12px var(--mono); padding:2px 4px 2px 10px; border-radius:20px;
+  border:1px solid var(--line); background:rgba(3,5,10,.7); }
+.chip button { margin:0; padding:0 7px; background:transparent; color:var(--mute); font-size:14px; line-height:20px; }
+.chip button:hover { color:var(--bad); }
+.addemo { display:inline-flex; gap:6px; align-items:center; }
+.addemo select { width:auto; }
+.addemo button { margin:0; }
+.actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:10px 0 4px; }
+.actions button { margin:0; }
+.seedrow { display:flex; gap:6px; } .seedrow input { flex:1; min-width:0; } .seedrow button { margin:0; padding:8px 10px; }
+.rollwrap { overflow-x:auto; border:1px solid var(--line); border-radius:6px; background:#05060c; }
+.rollwrap canvas { display:block; }
+.legend { display:flex; flex-wrap:wrap; gap:10px; font:12px var(--mono); color:var(--mute); margin:6px 0; }
+.legend i { display:inline-block; width:12px; height:8px; border-radius:2px; margin-right:5px; vertical-align:middle; }
+.stats { display:flex; flex-wrap:wrap; gap:6px 18px; font:13px var(--mono); color:var(--mute); }
+.stats b { color:var(--ink); }
+td.ok { color:var(--good); } td.err { color:var(--bad); }
+.emo-ethereal { color:#b9a6ff; } .emo-dark { color:#ff6b6b; } .emo-joyful { color:#ffd84d; }
+.emo-melancholic { color:#6fa8ff; } .emo-energetic { color:#ff9f43; } .emo-peaceful { color:#5fe0b0; }
+pre.snippet { font-size:12px; }
+@media (max-width:760px) { .ctlgrid { grid-template-columns:1fr 1fr; } }
