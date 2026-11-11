@@ -1351,6 +1351,8 @@ class CreativeComposer:
         # Generate MIDI
         midi = MIDIFile(self.params.voice_count)
         current_time = 0.0
+        # (track, pitch, start tick) of every note written so far; see add_motif_to_midi
+        self._note_starts = set()
 
         # Calculate durations and tension values for visualization
         durations = []
@@ -1620,21 +1622,39 @@ class CreativeComposer:
                     # Ensure velocity is in valid MIDI range (0-127)
                     velocity = max(0, min(127, int(velocity)))
 
-                    midi.addNote(track, track, pitch, timing,
-                               duration, velocity)
+                    if self._is_new_note_start(midi, track, pitch, timing):
+                        midi.addNote(track, track, pitch, timing,
+                                   duration, velocity)
                     current_time += duration
                 else:
                     # Ensure velocity is in valid MIDI range (0-127)
                     velocity = max(0, min(127, int(note.velocity)))
 
-                    midi.addNote(track, track, pitch, current_time,
-                               note.duration, velocity)
+                    if self._is_new_note_start(midi, track, pitch, current_time):
+                        midi.addNote(track, track, pitch, current_time,
+                                   note.duration, velocity)
                     current_time += note.duration
 
             except (TypeError, ValueError, IndexError) as e:
                 if self.params.debug_mode:
                     print(f"Warning: Skipping invalid note in voice {voice_idx}: {str(e)}")
                 continue
+
+    def _is_new_note_start(self, midi: MIDIFile, track: int, pitch: int, time: float) -> bool:
+        """True unless a note with this pitch already starts at this tick on this track.
+
+        Overlapping sections can produce such duplicates. MIDIUtil's duplicate removal then
+        drops one note-on but keeps both note-offs, and writeFile fails with IndexError.
+        Skipping the second note keeps the first one, as MIDIUtil intends.
+        """
+        starts = getattr(self, '_note_starts', None)
+        if starts is None:
+            starts = self._note_starts = set()
+        key = (track, pitch, midi.time_to_ticks(time))
+        if key in starts:
+            return False
+        starts.add(key)
+        return True
 
     def save_composition(self, midi: MIDIFile, audio: Optional[np.ndarray],
                         base_filename: str = "creative_composition"):
