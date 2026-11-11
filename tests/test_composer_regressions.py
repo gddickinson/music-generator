@@ -80,3 +80,36 @@ def test_generate_wav_fails_early_with_clear_message():
     params = CreativeComposerParams(generate_wav=True, visualization_enabled=False, debug_mode=False)
     with pytest.raises(NotImplementedError, match="WAV"):
         CreativeComposer(params)
+
+
+@pytest.mark.parametrize("form", list(MusicalForm))
+@pytest.mark.parametrize("seed", [0, 5])
+def test_sections_tile_the_timeline(form, seed, monkeypatch):
+    """Section lengths were computed in 'seconds' (beats / (tempo/60)) but used as beats, and time
+    advanced by a whole section after every motif, so sections overlapped or left gaps. Now all
+    motifs of a section start at the section start and the next section starts exactly where the
+    section's last note ends."""
+    import advanced_composer
+    calls = []
+
+    class Recording(advanced_composer.MIDIFile):
+        def addNote(self, track, channel, pitch, time, duration, volume, annotation=None):
+            calls.append((len(composer.section_spans), time, time + duration))
+            super().addNote(track, channel, pitch, time, duration, volume, annotation)
+
+    monkeypatch.setattr(advanced_composer, "MIDIFile", Recording)
+    random.seed(seed)
+    np.random.seed(seed)
+    params = CreativeComposerParams(form=form, visualization_enabled=False, debug_mode=False)
+    with contextlib.redirect_stderr(io.StringIO()):
+        composer = CreativeComposer(params)
+        composer.generate_composition()
+    spans = composer.section_spans
+    assert len(spans) == len(composer.form.sections) and spans[0][0] == 0.0
+    for (_, end), (start, _) in zip(spans, spans[1:]):
+        assert start == end                      # no gap, no overlap
+    for i, (start, end) in enumerate(spans):
+        notes = [(t0, t1) for k, t0, t1 in calls if k == i]
+        assert notes, f"section {i} wrote no notes"
+        assert min(t0 for t0, _ in notes) == start  # the section starts with its first note
+        assert max(t1 for _, t1 in notes) == end    # and ends with its last

@@ -35,7 +35,7 @@ export class PianoRoll {
     // section bands and tension curve
     const pts = [];
     p.sections.forEach((s, i) => {
-      const a = X(s.start * TICKS), b = X((s.start + s.duration * s.motifs.length) * TICKS);
+      const a = X(s.start * TICKS), b = X((s.start + s.duration) * TICKS);
       ctx.fillStyle = EMOTION_COLORS[s.emotion] + (i % 2 ? '14' : '22');
       ctx.fillRect(a, top, Math.max(1, b - a), bottom - top);
       ctx.fillStyle = EMOTION_COLORS[s.emotion]; ctx.fillRect(a, top - 6, Math.max(1, b - a - 1), 4);

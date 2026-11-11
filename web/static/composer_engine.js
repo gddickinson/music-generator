@@ -58,16 +58,10 @@ export class Composer {
     return motif(notes, emotion);
   }
 
-  // calculate_section_duration (the Python divides beats by tempo/60, so this is in "seconds" per its comment)
+  // calculate_section_duration: nominal length in beats (the longest motif); fallback for a section without notes
   sectionDuration(s) {
-    let total = 0.0;
-    const tf = s.tempo / 60.0;
-    for (const m of s.motifs) {
-      let d = sum(m.notes.map(n => n.duration));
-      for (const h of m.history) { if (h === 'augmentation') d *= 2.0; else if (h === 'diminution') d *= 0.5; }
-      total += d;
-    }
-    return total > 0 ? total / tf : 4.0;
+    const longest = s.motifs.reduce((m, mo) => Math.max(m, sum(mo.notes.map(n => n.duration))), 0.0);
+    return longest > 0 ? longest : 4.0;
   }
 
   // calculate_section_tension (no harmony progression is ever attached, so that term is 0)
@@ -84,35 +78,40 @@ export class Composer {
     return Math.min(1.0, Math.max(0.0, t));
   }
 
-  // generate_composition: returns { midi, sections } where sections carry start (beats), duration and tension.
+  // generate_composition: returns { midi, sections } where sections carry start, duration (beats) and tension.
+  // All motifs of a section start at its start; the next section starts where its last written note ends.
   generate() {
     const P = this.params, midi = new MidiFile(P.voice_count), sections = [];
     this.starts = new Set();
     let t = 0.0;
     for (const s of this.form.sections) {
       midi.addTempo(0, t, s.tempo);
-      const duration = this.sectionDuration(s), tension = this.sectionTension(s);
-      sections.push({ start: t, duration, tension, tempo: s.tempo, key: s.key, texture: s.texture, emotion: s.emotion,
-        dynamics: s.dynamics, motifs: s.motifs.map(m => ({ notes: m.notes.length, history: m.history })) });
+      const tension = this.sectionTension(s);
+      let end = t;
       for (const m of s.motifs) {
         for (let v = 0; v < P.voice_count; v++) {
           const tm = transformForVoice(m, v, s.texture, this.py);
-          if (tm) this.addMotif(midi, tm, v, t);
+          if (tm) end = Math.max(end, this.addMotif(midi, tm, v, t));
         }
-        t += duration;
       }
+      if (end <= t) end = t + this.sectionDuration(s);
+      sections.push({ start: t, duration: end - t, tension, tempo: s.tempo, key: s.key, texture: s.texture,
+        emotion: s.emotion, dynamics: s.dynamics, motifs: s.motifs.map(m => ({ notes: m.notes.length, history: m.history })) });
+      t = end;
     }
     return { midi, sections };
   }
 
   // add_motif_to_midi (track = channel = voice; a second note with the same pitch and start tick is skipped)
+  // Returns the time (beats) at which the last written note ends.
   addMotif(midi, m, track, start) {
-    let cur = start;
+    let cur = start, end = start;
     const add = (pitch, time, dur, vel) => {
       const key = `${track}:${pitch}:${MidiFile.ticks(time)}`;
       if (this.starts.has(key)) return;
       this.starts.add(key);
       midi.addNote(track, track, pitch, time, dur, vel);
+      end = Math.max(end, time + dur);
     };
     for (const n of m.notes) {
       const pitch = Math.max(0, Math.min(127, Math.trunc(n.pitch)));
@@ -129,6 +128,7 @@ export class Composer {
         cur += n.duration;
       }
     }
+    return end;
   }
 }
 

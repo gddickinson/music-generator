@@ -61,17 +61,14 @@ def compose(params: dict = None) -> dict:
             midi, _ = composer.generate_composition()
     notes = [[t - 1, e.channel, e.pitch, e.tick, e.duration, int(e.volume)]
              for t, track in enumerate(midi.tracks) for e in track.eventList if e.evtname == "NoteOn"]
-    sections, start = [], 0.0
-    for s in composer.form.sections:
-        duration = composer.calculate_section_duration(s)
+    sections = []
+    for s, (start, end) in zip(composer.form.sections, composer.section_spans):
         sections.append({
-            "start": start, "duration": duration, "tension": composer.calculate_section_tension(s),
+            "start": start, "duration": end - start, "tension": composer.calculate_section_tension(s),
             "tempo": s.tempo, "key": s.key, "texture": s.texture.name.lower(), "emotion": s.emotion.value,
             "dynamics": s.dynamics_base,
             "motifs": [{"notes": len(m.notes), "history": [h.value for h in m.development_history]}
                        for m in s.motifs]})
-        for _ in s.motifs:  # generate_composition advances by the section duration after every motif
-            start += duration
     buf = io.BytesIO()
     midi.writeFile(buf)
     return {"params": p, "form": composer.form.name.value, "sections": sections, "notes": notes,

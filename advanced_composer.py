@@ -124,23 +124,15 @@ class CreativeComposer:
         return min(1.0, max(0.0, tension))
 
     def calculate_section_duration(self, section: Section) -> float:
-        """Calculate total duration of a section in seconds"""
-        total_duration = 0.0
-        tempo_factor = section.tempo / 60.0  # Convert BPM to seconds
+        """Nominal length of a section in beats: its longest motif (motifs start together).
 
-        for motif in section.motifs:
-            # Sum up all note durations in the motif
-            motif_duration = sum(note.duration for note in motif.notes)
-            # Account for any development techniques that affect duration
-            for dev_type in motif.development_history:
-                if dev_type == DevelopmentType.AUGMENTATION:
-                    motif_duration *= 2.0
-                elif dev_type == DevelopmentType.DIMINUTION:
-                    motif_duration *= 0.5
-            total_duration += motif_duration
-
-        # Convert to real time based on tempo
-        return total_duration / tempo_factor if total_duration > 0 else 4.0  # Default to 4 seconds if no notes
+        Note durations already include augmentation/diminution. generate_composition uses the
+        span of the notes actually written (voices can stretch a motif); this is the estimate,
+        and the fallback for a section without notes.
+        """
+        longest = max((sum(note.duration for note in motif.notes) for motif in section.motifs),
+                      default=0.0)
+        return longest if longest > 0 else 4.0  # Default to 4 beats if no notes
 
     def initialize_sonata_form(self) -> Form:
         """Initialize sonata form with exposition, development, and recapitulation"""
@@ -872,6 +864,8 @@ class CreativeComposer:
         # Calculate durations and tension values for visualization
         durations = []
         tension_values = []
+        # (start, end) in beats of every section: each starts where the previous one's notes end
+        self.section_spans = []
 
         # Process each section
         for section_idx, section in enumerate(tqdm(self.form.sections,
@@ -884,14 +878,11 @@ class CreativeComposer:
             # Set tempo for section
             midi.addTempo(0, current_time, section.tempo)
 
-            # Calculate section duration and tension
-            section_duration = self.calculate_section_duration(section)
             section_tension = self.calculate_section_tension(section)
-
-            durations.append(section_duration)
             tension_values.append(section_tension)
+            section_end = current_time
 
-            # Process motifs
+            # Process motifs: all motifs of a section start together, at the section start
             for motif_idx, motif in enumerate(section.motifs):
                 if self.params.debug_mode:
                     print(f"Processing motif {motif_idx + 1} "
@@ -906,11 +897,17 @@ class CreativeComposer:
 
                     # Add notes to MIDI
                     if transformed_motif:
-                        self.add_motif_to_midi(
+                        end = self.add_motif_to_midi(
                             midi, transformed_motif, voice_idx, current_time
                         )
+                        section_end = max(section_end, end)
 
-                current_time += section_duration
+            # The next section starts where this one's last note ends (all times in beats)
+            if section_end <= current_time:
+                section_end = current_time + self.calculate_section_duration(section)
+            self.section_spans.append((current_time, section_end))
+            durations.append(section_end - current_time)
+            current_time = section_end
 
         # Generate waveform if requested
         waveform = None
@@ -1100,12 +1097,16 @@ class CreativeComposer:
         return None  # Default case if texture type not handled
 
     def add_motif_to_midi(self, midi: MIDIFile, motif: Optional[Motif],
-                             voice_idx: int, start_time: float) -> None:
-        """Add motif to MIDI file with performance directives"""
+                             voice_idx: int, start_time: float) -> float:
+        """Add motif to MIDI file with performance directives.
+
+        Returns the time (beats) at which the last written note ends (start_time if none).
+        """
         if not motif:
-            return
+            return start_time
 
         current_time = start_time
+        end_time = start_time
         track = voice_idx
 
         for note in motif.notes:
@@ -1140,6 +1141,7 @@ class CreativeComposer:
                     if self._is_new_note_start(midi, track, pitch, timing):
                         midi.addNote(track, track, pitch, timing,
                                    duration, velocity)
+                        end_time = max(end_time, timing + duration)
                     current_time += duration
                 else:
                     # Ensure velocity is in valid MIDI range (0-127)
@@ -1148,12 +1150,14 @@ class CreativeComposer:
                     if self._is_new_note_start(midi, track, pitch, current_time):
                         midi.addNote(track, track, pitch, current_time,
                                    note.duration, velocity)
+                        end_time = max(end_time, current_time + note.duration)
                     current_time += note.duration
 
             except (TypeError, ValueError, IndexError) as e:
                 if self.params.debug_mode:
                     print(f"Warning: Skipping invalid note in voice {voice_idx}: {str(e)}")
                 continue
+        return end_time
 
     def _is_new_note_start(self, midi: MIDIFile, track: int, pitch: int, time: float) -> bool:
         """True unless a note with this pitch already starts at this tick on this track.

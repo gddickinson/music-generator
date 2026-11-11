@@ -132,7 +132,7 @@ class Visualization:
                        alpha=0.3,
                        zorder=1)
 
-        plt.xlabel('Time (seconds)')
+        plt.xlabel('Time (beats)')
         plt.ylabel('Tension')
         plt.title('Musical Tension Over Time')
         plt.grid(True, alpha=0.3, zorder=0)
