@@ -6,7 +6,7 @@ A sophisticated algorithmic composition system with 6 Python files implementing 
 ## Short-term Improvements
 - [x] Add `requirements.txt` — needs `numpy`, `matplotlib`, `midiutil`, `scipy`, `networkx`, `tqdm`
 - [ ] Add `__init__.py` and reorganize into a package: `music_generator/` with submodules
-- [x] Rename `multi-fractal-music.py` to `multi_fractal_music.py` (hyphen prevents Python import); the identical hyphenated copy is still in the repo
+- [x] Rename `multi-fractal-music.py` to `multi_fractal_music.py` (hyphen prevents Python import)
 - [ ] Add CLI interface: `python -m music_generator --form sonata --key C --tempo 120 --output my_piece.mid`
 - [x] Add unit tests for `harmony_engine.py` — verify voice leading rules, chord voicing, consonance scoring
 - [x] Add unit tests for `fractal_melody_generator.py` — test scale mapping, mode application
@@ -39,4 +39,4 @@ A sophisticated algorithmic composition system with 6 Python files implementing 
 - [x] No tests whatsoever — musical output is hard to test but harmony rules and scale math are deterministic
 - [ ] Import chain (`advanced_composer.py` imports from `fractal_melody_generator.py` and `harmony_engine.py`) is fragile without proper packaging
 - [ ] `musical_genetics.py` population management may have performance issues with large populations — needs profiling
-- [ ] `advanced_composer.py` exceeded 500 lines — split into `musical_types.py`, `motif_development.py`, `voice_leading.py`, `music_visualization.py` (modules created, but `advanced_composer.py` still defines its own copies and is ~1700 lines)
+- [x] `advanced_composer.py` exceeded 500 lines — split into `musical_types.py`, `motif_development.py`, `voice_leading.py`, `music_visualization.py` (it now imports them; still ~1200 lines, the form initialisers could move out next)

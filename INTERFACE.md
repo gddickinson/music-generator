@@ -7,13 +7,13 @@
 | `fractal_melody_generator.py` | Fractal-based melody generation with mode/emotion support |
 | `harmony_engine.py` | Harmony generation with voice leading and chord progressions |
 | `musical_genetics.py` | Genetic algorithms for evolving musical phrases |
-| `musical_types.py` | Enums and dataclasses (MusicalForm, Note, Motif, Section, etc.); `advanced_composer.py` keeps its own copies |
+| `musical_types.py` | Enums and dataclasses (MusicalForm, Note, Motif, Section, CreativeComposerParams, etc.) |
 | `motif_development.py` | Motif transformations (invert, retrograde, augment, fragment, etc.) |
 | `voice_leading.py` | Voice leading optimization (parallel fifths detection, voicing generation) |
 | `music_visualization.py` | Visualization: form graphs, tension plots, voice leading diagrams |
-| `advanced_composer.py` | CreativeComposer and the forms; still defines its own copies of the types, MotifDevelopment, VoiceLeading and Visualization (these shadow the imported split modules, so fixes go in both places) |
+| `advanced_composer.py` | CreativeComposer and the form initialisers; imports (and re-exports) the types, MotifDevelopment, VoiceLeading and Visualization from the split modules |
 | `main_composer.py` | Simpler composition entry point using fractal + harmony + genetics |
-| `multi_fractal_music.py` | Multi-fractal composition (Mandelbrot, Koch, Sierpinski, Julia, L-system); `multi-fractal-music.py` is an identical older copy |
+| `multi_fractal_music.py` | Multi-fractal composition (Mandelbrot, Koch, Sierpinski, Julia, L-system) |
 | `test_music_generator.py` | Unit tests for all modules |
 | `tests/` | `test_composer_regressions.py` (bug fixes), `test_web.py`, `test_fixtures_current.py`, `fixtures/` (Python output the JS is checked against) |
 | `run_web.py` | Starts the web app (FastAPI, port 8166) |
