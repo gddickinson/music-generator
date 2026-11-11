@@ -1,5 +1,5 @@
 // Home page: hero with a piano roll of the default piece, counts from the API, entry cards.
-import { route, api, app, list, esc } from './core.js';
+import { route, api, app, list, esc, onLeave } from './core.js';
 import { compose, DEFAULTS } from './composer_engine.js';
 import { PianoRoll } from './pianoroll.js';
 
@@ -39,4 +39,7 @@ route('home', async () => {
   <div class="grid">${list(info.forms, f => `<a class="card" href="#/compose?form=${f.id}"><b>${esc(f.name)}</b><span>${esc(f.description)}</span></a>`)}</div>`;
   const roll = new PianoRoll(document.getElementById('hero'));
   roll.set(compose(DEFAULTS));
+  const onResize = () => roll.draw();
+  window.addEventListener('resize', onResize);
+  onLeave(() => window.removeEventListener('resize', onResize));
 });

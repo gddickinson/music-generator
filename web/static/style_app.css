@@ -28,3 +28,7 @@ td.ok { color:var(--good); } td.err { color:var(--bad); }
 .emo-melancholic { color:#6fa8ff; } .emo-energetic { color:#ff9f43; } .emo-peaceful { color:#5fe0b0; }
 pre.snippet { font-size:12px; }
 @media (max-width:760px) { .ctlgrid { grid-template-columns:1fr 1fr; } }
+/* grid children may shrink below a canvas drawn at a wider size; the roll then scrolls inside .rollwrap */
+.two > *, .fig { min-width:0; }
+.rollwrap { max-width:100%; }
+.rollwrap canvas { max-width:none; }
