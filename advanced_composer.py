@@ -521,6 +521,11 @@ class Visualization:
 
 class CreativeComposer:
     def __init__(self, params: CreativeComposerParams):
+        if params.generate_wav:
+            raise NotImplementedError(
+                "WAV output is not implemented for CreativeComposer (it writes MIDI only); "
+                "render the MIDI file, or use main_composer.py / multi_fractal_music.py, "
+                "which synthesise WAV audio")
         self.params = params
         self.voice_leading = VoiceLeading()
         self.motif_development = MotifDevelopment()
@@ -1097,7 +1102,7 @@ class CreativeComposer:
                 ))
 
         return Form(
-            name=MusicalForm.MIXED,
+            name=MusicalForm.ARCH,
             sections=sections,
             transitions=transitions,
             development_types=[DevelopmentType.AUGMENTATION, DevelopmentType.DIMINUTION],
@@ -1149,7 +1154,7 @@ class CreativeComposer:
                 ))
 
         return Form(
-            name=MusicalForm.MIXED,
+            name=MusicalForm.MOMENT,
             sections=sections,
             transitions=transitions,
             development_types=list(DevelopmentType),
@@ -1199,7 +1204,7 @@ class CreativeComposer:
                 ))
 
         return Form(
-            name=MusicalForm.MIXED,
+            name=MusicalForm.PROCESS,
             sections=sections,
             transitions=transitions,
             development_types=[DevelopmentType.PHASE_SHIFT, DevelopmentType.AUGMENTATION],

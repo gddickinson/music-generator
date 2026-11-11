@@ -20,6 +20,7 @@ def compose(form, seed, **kw):
         midi, _ = composer.generate_composition()
     return composer, midi
 
+
 @pytest.mark.parametrize("form", list(MusicalForm))
 @pytest.mark.parametrize("seed", [0, 1, 2])
 def test_every_form_writes_a_midi_file(form, seed):
@@ -63,3 +64,19 @@ def test_phase_shift_offsets_by_shift_only():
                   emotional_intent=EmotionalStyle.PEACEFUL)
     shifted = MotifDevelopment.phase_shift(motif, 0.125)
     assert [n.performance.timing_offset for n in shifted.notes] == [0.125] * 4
+
+
+@pytest.mark.parametrize("form,name", [(MusicalForm.ARCH, MusicalForm.ARCH),
+                                       (MusicalForm.MOMENT, MusicalForm.MOMENT),
+                                       (MusicalForm.PROCESS, MusicalForm.PROCESS)])
+def test_form_name_matches_requested_form(form, name):
+    """Arch, moment and process forms were labelled MIXED (wrong title on the form graph)."""
+    composer, _ = compose(form, 0)
+    assert composer.form.name == name
+
+
+def test_generate_wav_fails_early_with_clear_message():
+    """generate_wav=True crashed after composing with AttributeError (no generate_waveform)."""
+    params = CreativeComposerParams(generate_wav=True, visualization_enabled=False, debug_mode=False)
+    with pytest.raises(NotImplementedError, match="WAV"):
+        CreativeComposer(params)
