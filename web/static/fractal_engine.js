@@ -118,9 +118,11 @@ export function melodyPitches(mode, emotion) {
 }
 
 // FractalMelodyGenerator.generate_melody(): [melody, timing, velocities]; draws one np.random.randint per note.
-export function generateMelody(mode, emotion, np) {
+// `offset` moves base_note away from middle C (the home key); the melodic filter only looks at intervals, so the
+// melody is the middle-C one transposed.
+export function generateMelody(mode, emotion, np, offset = 0) {
   const p = EMOTION_PARAMS[emotion];
-  const melody = melodyPitches(mode, emotion).slice();
+  const melody = melodyPitches(mode, emotion).map(n => n + offset);
   const timing = [], velocities = [];
   let t = 0;
   for (let i = 0; i < melody.length; i++) {

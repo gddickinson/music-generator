@@ -7,7 +7,9 @@ import { Player, renderWav, pieceSeconds } from './player.js';
 import { tempoMap } from './timing.js';
 
 const QS = { form: 'form', mode: 'mode', key: 'key', tempo: 'base_tempo', sections: 'section_count',
-  voices: 'voice_count', seed: 'seed' };
+  voices: 'voice_count', seed: 'seed', complexity: 'development_complexity', density: 'texture_density',
+  modulation: 'modulation_frequency' };
+const FRACTION = new Set(['development_complexity', 'texture_density', 'modulation_frequency']);
 const label = s => s.replace(/_/g, ' ');
 
 function fromQuery(q, limits) {
@@ -16,6 +18,7 @@ function fromQuery(q, limits) {
     if (q[k] == null) continue;
     p[name] = ['form', 'mode', 'key'].includes(name) ? q[k] : Number(q[k]);
     if (limits[name]) p[name] = Math.min(limits[name][1], Math.max(limits[name][0], Math.trunc(p[name]) || 0));
+    if (FRACTION.has(name)) p[name] = Math.min(1, Math.max(0, p[name] || 0));
   }
   if (q.journey) p.emotional_journey = q.journey.split(',').filter(Boolean).slice(0, 8);
   return p;
@@ -41,6 +44,8 @@ params = CreativeComposerParams(
     mode=MusicalMode.${p.mode.toUpperCase()},
     emotional_journey=[${p.emotional_journey.map(E).join(', ')}],
     section_count=${p.section_count}, voice_count=${p.voice_count},
+    development_complexity=${p.development_complexity}, texture_density=${p.texture_density},
+    modulation_frequency=${p.modulation_frequency},
     visualization_enabled=False, debug_mode=False)
 composer = CreativeComposer(params)
 midi, _ = composer.generate_composition()
@@ -59,7 +64,7 @@ route('compose', async (args, query) => {
     <div class="ctlgrid">
       <div><label for="f-form">Form</label><select id="f-form">${opts(info.forms.map(f => f.id), p.form)}</select></div>
       <div><label for="f-mode">Mode</label><select id="f-mode">${opts(info.modes, p.mode)}</select></div>
-      <div><label for="f-key">Key (section labels)</label><select id="f-key">${opts(info.keys, p.key, v => v)}</select></div>
+      <div><label for="f-key">Key</label><select id="f-key">${opts(info.keys, p.key, v => v)}</select></div>
       <div><label for="f-seed">Seed</label><div class="seedrow"><input id="f-seed" type="number" min="0" max="4294967295" value="${p.seed}">
         <button class="alt" id="dice" title="Random seed" aria-label="Random seed">Roll</button></div></div>
       <div id="sl"></div>
@@ -90,6 +95,11 @@ route('compose', async (args, query) => {
   mk('tempo', 'Base tempo (BPM)', 'base_tempo', L.base_tempo[0], L.base_tempo[1]);
   mk('sections', 'Sections', 'section_count', L.section_count[0], L.section_count[1]);
   mk('voices', 'Voices', 'voice_count', L.voice_count[0], L.voice_count[1]);
+  const fr = (id, lab, name) => slider(sl, { id, label: lab, min: 0, max: 1, step: 0.05, value: p[name], fmt: v => v.toFixed(2) },
+    v => { p[name] = Number(v.toFixed(2)); update(); });
+  fr('complexity', 'Development complexity', 'development_complexity');
+  fr('density', 'Texture density', 'texture_density');
+  fr('modulation', 'Modulation frequency', 'modulation_frequency');
 
   const roll = new PianoRoll($('#roll')), player = new Player();
   slider($('#zoomhost'), { id: 'zoom', label: 'Zoom', min: 1, max: 8, step: 0.5, value: 1, fmt: v => v + 'x' },

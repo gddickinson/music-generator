@@ -105,10 +105,25 @@ class Form:
     texture_progression: List[TextureType]
 
 
+# Semitones above C of the keys CreativeComposer accepts (F# and Gb are the same pitch class).
+KEY_SEMITONES = {
+    'C': 0, 'G': 7, 'D': 2, 'A': 9, 'E': 4, 'B': 11, 'F#': 6,
+    'F': 5, 'Bb': 10, 'Eb': 3, 'Ab': 8, 'Db': 1, 'Gb': 6
+}
+
+
+def transposition(from_key: str, to_key: str) -> int:
+    """Shortest transposition in semitones (-5..+6) from one key centre to another."""
+    d = (KEY_SEMITONES[to_key] - KEY_SEMITONES[from_key]) % 12
+    return d - 12 if d > 6 else d
+
+
 @dataclass
 class CreativeComposerParams:
     form: MusicalForm = MusicalForm.SONATA
     base_tempo: int = 120
+    # Home key: melodies are built on this tonic (the nearest one to middle C), and a section
+    # in another key (dominant, relative minor, a modulation) is transposed to that key.
     key: str = "C"
     mode: MusicalMode = MusicalMode.IONIAN
     emotional_journey: List[EmotionalStyle] = field(default_factory=lambda: [
@@ -117,8 +132,12 @@ class CreativeComposerParams:
         EmotionalStyle.MELANCHOLIC,
         EmotionalStyle.JOYFUL
     ])
+    # 0..1: how many development steps a motif goes through when developed (1 to 4).
     development_complexity: float = 0.7
+    # 0..1: share of the accompanying voices that play (0 = the melody alone, 1 = every voice).
     texture_density: float = 0.6
+    # 0..1: chance that a later section in the home key modulates to a related key
+    # (dominant, subdominant or relative minor).
     modulation_frequency: float = 0.3
     section_count: int = 4
     voice_count: int = 4

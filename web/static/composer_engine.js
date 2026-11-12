@@ -6,7 +6,7 @@ import { PyRandom, NumpyRandom } from './pyrandom.js';
 import { generateMelody, MODES, EMOTIONS } from './fractal_engine.js';
 import { ARTICULATIONS, TEXTURES, motif, note, transformForVoice } from './motif_engine.js';
 import { FORM_INITIALISERS, mixed } from './forms_extra.js';
-import { KEYS } from './forms_core.js';
+import { KEYS, KEY_NUMBER, dominantKey, subdominantKey, relativeMinor, transposition, pyRound } from './forms_core.js';
 import { MidiFile } from './midi_writer.js';
 
 // MusicalForm in enum order; rondo, theme_and_variations and fugue fall back to the mixed form in the Python.
@@ -18,6 +18,7 @@ export { MODES, EMOTIONS, KEYS, TEXTURES, ARTICULATIONS };
 export const DEFAULTS = {
   form: 'sonata', base_tempo: 120, key: 'C', mode: 'ionian',
   emotional_journey: ['peaceful', 'energetic', 'melancholic', 'joyful'], section_count: 4, voice_count: 4, seed: 0,
+  development_complexity: 0.7, texture_density: 0.6, modulation_frequency: 0.3,
 };
 
 const EMOTION_TENSION = { peaceful: 0.2, ethereal: 0.3, joyful: 0.5, energetic: 0.7, melancholic: 0.6, dark: 0.8 };
@@ -39,13 +40,14 @@ export class Composer {
     this.params = { ...DEFAULTS, ...params };
     this.py = new PyRandom(this.params.seed);
     this.np = new NumpyRandom(this.params.seed);
-    this.gen = { mode: this.params.mode, emotion: this.params.emotional_journey[0] };
+    this.gen = { mode: this.params.mode, emotion: this.params.emotional_journey[0],
+      offset: transposition('C', this.params.key) };
     this.form = (FORM_INITIALISERS[this.params.form] || mixed)(this);
   }
 
   // _create_motif_from_melody(emotion, duration): up to 32 fractal-melody notes with varied lengths and articulation.
   createMotif(emotion, duration = 0.25) {
-    let [mel, , vel] = generateMelody(this.gen.mode, this.gen.emotion, this.np);
+    let [mel, , vel] = generateMelody(this.gen.mode, this.gen.emotion, this.np, this.gen.offset);
     if (mel.length < 8) {
       const rep = (a, n) => Array.from({ length: n }, () => a).flat();
       const k = Math.floor(8 / mel.length) + 1, kv = Math.floor(8 / vel.length) + 1;
@@ -57,6 +59,12 @@ export class Composer {
     });
     return motif(notes, emotion);
   }
+
+  // _max_development_steps: 1 (complexity 0) to 4 (complexity 1)
+  maxDevelopmentSteps() { return Math.max(1, pyRound(this.params.development_complexity * 4)); }
+
+  // _active_voices: the melody plus texture_density of the accompanying voices
+  activeVoices() { return 1 + pyRound(this.params.texture_density * (this.params.voice_count - 1)); }
 
   // calculate_section_duration: nominal length in beats (the longest motif); fallback for a section without notes
   sectionDuration(s) {
@@ -86,11 +94,16 @@ export class Composer {
     let t = 0.0;
     for (const s of this.form.sections) {
       midi.addTempo(0, t, s.tempo);
+      const home = P.key;
+      if (sections.length > 0 && s.key === home && this.py.random() < P.modulation_frequency) {
+        s.key = this.py.choice([dominantKey(home), subdominantKey(home), relativeMinor(home)]);
+      }
+      this.transpose = transposition(home, s.key);
       const tension = this.sectionTension(s);
       let end = t;
       for (const m of s.motifs) {
-        for (let v = 0; v < P.voice_count; v++) {
-          const tm = transformForVoice(m, v, s.texture, this.py);
+        for (let v = 0, n = this.activeVoices(); v < n; v++) {
+          const tm = transformForVoice(m, v, s.texture, this.py, KEY_NUMBER[home]);
           if (tm) end = Math.max(end, this.addMotif(midi, tm, v, t));
         }
       }
@@ -114,7 +127,7 @@ export class Composer {
       end = Math.max(end, time + dur);
     };
     for (const n of m.notes) {
-      const pitch = Math.max(0, Math.min(127, Math.trunc(n.pitch)));
+      const pitch = Math.max(0, Math.min(127, Math.trunc(n.pitch) + this.transpose));
       if (n.performance) {
         let d = n.duration, vel = n.velocity;
         const time = cur + n.performance.timing_offset;

@@ -113,3 +113,62 @@ def test_sections_tile_the_timeline(form, seed, monkeypatch):
         assert notes, f"section {i} wrote no notes"
         assert min(t0 for t0, _ in notes) == start  # the section starts with its first note
         assert max(t1 for _, t1 in notes) == end    # and ends with its last
+
+
+def _notes(form, seed, **kw):
+    _, midi = compose(form, seed, **kw)
+    return [(t - 1, e.pitch, e.tick, e.duration) for t, track in enumerate(midi.tracks)
+            for e in track.eventList if e.evtname == "NoteOn"]
+
+
+def test_key_sets_the_tonic():
+    """`key` used to label sections only: melodies always started at middle C."""
+    in_c = _notes(MusicalForm.ARCH, 3, key="C", modulation_frequency=0.0)
+    in_d = _notes(MusicalForm.ARCH, 3, key="D", modulation_frequency=0.0)
+    in_g = _notes(MusicalForm.ARCH, 3, key="G", modulation_frequency=0.0)
+    assert [(t, p + 2, k, d) for t, p, k, d in in_c] == in_d      # D: up a tone
+    assert [(t, p - 5, k, d) for t, p, k, d in in_c] == in_g      # G: down a fourth (nearest to C)
+
+
+def test_section_key_transposes_its_notes():
+    """The sonata's second subject is announced in the dominant (G) and now sounds there:
+    its melody voice is the secondary theme a fourth lower (nearest G to C)."""
+    composer, midi = compose(MusicalForm.SONATA, 0, modulation_frequency=0.0)
+    section = composer.form.sections[1]
+    assert section.key == "G"
+    start, end = (int(t * 960) for t in composer.section_spans[1])
+    played = [e.pitch for e in sorted(midi.tracks[1].eventList, key=lambda e: e.tick)
+              if e.evtname == "NoteOn" and start <= e.tick < end]
+    assert played == [n.pitch - 5 for n in section.motifs[0].notes]
+
+
+def test_development_complexity_sets_the_number_of_development_steps():
+    """development_complexity was stored but never read."""
+    simple, _ = compose(MusicalForm.SONATA, 4, development_complexity=0.0)
+    rich, _ = compose(MusicalForm.SONATA, 4, development_complexity=1.0)
+    assert len(simple.form.sections[2].motifs) == 2          # one step per theme
+    assert 6 <= len(rich.form.sections[2].motifs) <= 8       # three or four steps per theme
+
+
+@pytest.mark.parametrize("density,voices", [(0.0, {0}), (0.6, {0, 1, 2}), (1.0, {0, 1, 2, 3})])
+def test_texture_density_sets_how_many_voices_play(density, voices):
+    """texture_density was stored but never read; every voice always played."""
+    tracks = {t for t, *_ in _notes(MusicalForm.ARCH, 1, texture_density=density)}
+    assert tracks == voices
+
+
+def test_modulation_frequency_sets_how_often_sections_change_key():
+    """modulation_frequency was stored but never read."""
+    keys = lambda f: [s.key for s in compose(MusicalForm.PROCESS, 2, modulation_frequency=f,
+                                             section_count=8)[0].form.sections]
+    assert keys(0.0) == ["C"] * 8
+    moved = keys(1.0)
+    assert moved[0] == "C" and all(k in ("G", "F", "A") for k in moved[1:])
+
+
+def test_bad_parameter_values_are_rejected():
+    with pytest.raises(ValueError):
+        CreativeComposer(CreativeComposerParams(key="H", debug_mode=False, visualization_enabled=False))
+    with pytest.raises(ValueError):
+        CreativeComposer(CreativeComposerParams(texture_density=1.5, debug_mode=False,
+                                                visualization_enabled=False))

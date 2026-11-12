@@ -48,7 +48,8 @@ route('verify', async () => {
     <button id="lrun">Run in Python and compare</button><p id="lout" class="small"></p>`;
   $('#lrun').addEventListener('click', async () => {
     const q = Object.fromEntries(new URLSearchParams($('#lq').value.split('?').pop()));
-    const map = { form: 'form', mode: 'mode', key: 'key', tempo: 'base_tempo', sections: 'section_count', voices: 'voice_count', seed: 'seed' };
+    const map = { form: 'form', mode: 'mode', key: 'key', tempo: 'base_tempo', sections: 'section_count', voices: 'voice_count', seed: 'seed',
+      complexity: 'development_complexity', density: 'texture_density', modulation: 'modulation_frequency' };
     const params = {};
     for (const [k, v] of Object.entries(q)) if (map[k]) params[map[k]] = ['form', 'mode', 'key'].includes(map[k]) ? v : Number(v);
     if (q.journey) params.emotional_journey = q.journey.split(',');

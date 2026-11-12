@@ -65,7 +65,7 @@ export function developSection(c, s) {
   for (const m of s.motifs) {
     if (!m.notes.length) continue;
     let t = m;
-    for (let k = py.randint(1, 3); k > 0; k--) {
+    for (let k = py.randint(1, c.maxDevelopmentSteps()); k > 0; k--) {
       const available = ['augmentation', 'diminution'];
       if (t.notes.length > 1) available.push('retrograde');
       if (t.notes.length >= 8) available.push('fragmentation');

@@ -11,18 +11,23 @@ export const form = (name, sections, transitions) => ({ name, sections, transiti
 export const directive = (o = {}) => ({ tempo_change: null, dynamic_change: null, articulation: null,
   expression: null, timing_offset: 0.0, ...o });
 
-const KEY_NUMBER = { C: 0, G: 7, D: 2, A: 9, E: 4, B: 11, 'F#': 6, F: 5, Bb: 10, Eb: 3, Ab: 8, Db: 1, Gb: 6 };
+export const KEY_NUMBER = { C: 0, G: 7, D: 2, A: 9, E: 4, B: 11, 'F#': 6, F: 5, Bb: 10, Eb: 3, Ab: 8, Db: 1, Gb: 6 };
 export const KEYS = Object.keys(KEY_NUMBER);
 const NUMBER_KEY = Object.fromEntries(Object.entries(KEY_NUMBER).map(([k, v]) => [v, k])); // later keys win, as in Python
-const dominantKey = k => NUMBER_KEY[(KEY_NUMBER[k] + 7) % 12];
-const relativeMinor = k => NUMBER_KEY[(KEY_NUMBER[k] + 9) % 12];
+export const dominantKey = k => NUMBER_KEY[(KEY_NUMBER[k] + 7) % 12];
+export const subdominantKey = k => NUMBER_KEY[(KEY_NUMBER[k] + 5) % 12];
+export const relativeMinor = k => NUMBER_KEY[(KEY_NUMBER[k] + 9) % 12];
+// musical_types.transposition: shortest move (-5..+6 semitones) between key centres
+export const transposition = (from, to) => { const d = (((KEY_NUMBER[to] - KEY_NUMBER[from]) % 12) + 12) % 12; return d > 6 ? d - 12 : d; };
+// Python's round() (halves to even) for the non-negative values used here
+export const pyRound = x => { const f = Math.floor(x), r = x - f; return r > 0.5 || (r === 0.5 && f % 2 === 1) ? f + 1 : f; };
 
 // melody * (8 // len(melody) + 1) when shorter than 8 notes
 const repeatTo8 = a => (a.length < 8 ? Array.from({ length: Math.floor(8 / a.length) + 1 }, () => a).flat() : a);
 
 function theme(c, emotion, duration, articulation) {
   c.gen.emotion = emotion;
-  let [mel, , vel] = generateMelody(c.gen.mode, c.gen.emotion, c.np);
+  let [mel, , vel] = generateMelody(c.gen.mode, c.gen.emotion, c.np, c.gen.offset);
   mel = repeatTo8(mel); vel = repeatTo8(vel);
   return motif(mel.slice(0, 16).map((p, i) => note(p, duration, vel[i % vel.length], articulation)), emotion);
 }
@@ -42,7 +47,8 @@ export function sonata(c) {
     const available = ['augmentation'];
     if (t.notes.length > 1) available.push('inversion');
     if (t.notes.length >= 8) available.push('fragmentation');
-    for (let k = py.randint(2, 3); k > 0; k--) {
+    const steps = c.maxDevelopmentSteps();
+    for (let k = py.randint(Math.max(1, steps - 1), steps); k > 0; k--) {
       const type = py.choice(available);
       if (type === 'fragmentation' && t.notes.length >= 8) {
         const start = py.randint(0, t.notes.length - 4);
@@ -67,7 +73,7 @@ export function sonata(c) {
 
 export function minimalist(c) {
   const P = c.params, sections = [], transitions = [];
-  const [mel] = generateMelody(c.gen.mode, c.gen.emotion, c.np);
+  const [mel] = generateMelody(c.gen.mode, c.gen.emotion, c.np, c.gen.offset);
   const base = motif(mel.slice(0, 8).map(p => note(p, 0.25)), P.emotional_journey[0]);
   const motifs = [base, ...[0.125, 0.25, 0.375].map(s => D.phase_shift(base, s))];
   P.emotional_journey.forEach((emotion, i) => {

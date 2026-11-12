@@ -19,7 +19,9 @@ DEFAULTS = {
     "form": "sonata", "base_tempo": 120, "key": "C", "mode": "ionian",
     "emotional_journey": ["peaceful", "energetic", "melancholic", "joyful"],
     "section_count": 4, "voice_count": 4, "seed": 0,
+    "development_complexity": 0.7, "texture_density": 0.6, "modulation_frequency": 0.3,
 }
+FRACTIONS = ("development_complexity", "texture_density", "modulation_frequency")  # each 0..1
 KEYS = ['C', 'G', 'D', 'A', 'E', 'B', 'F#', 'F', 'Bb', 'Eb', 'Ab', 'Db', 'Gb']
 LIMITS = {"base_tempo": (30, 240), "section_count": (1, 20), "voice_count": (1, 8), "seed": (0, 2**32 - 1)}
 _lock = threading.Lock()  # the composer uses the global random generators
@@ -36,6 +38,10 @@ def normalise(params: dict) -> dict:
     if not 1 <= len(journey) <= 8:
         raise ValueError("emotional_journey needs 1 to 8 emotions")
     p["emotional_journey"] = journey
+    for name in FRACTIONS:
+        p[name] = float(p[name])
+        if not 0.0 <= p[name] <= 1.0:
+            raise ValueError(f"{name} must be between 0 and 1")
     for name, (lo, hi) in LIMITS.items():
         p[name] = int(p[name])
         if not lo <= p[name] <= hi:
@@ -55,6 +61,7 @@ def compose(params: dict = None) -> dict:
             form=MusicalForm(p["form"]), base_tempo=p["base_tempo"], key=p["key"], mode=MusicalMode(p["mode"]),
             emotional_journey=[EmotionalStyle(e) for e in p["emotional_journey"]],
             section_count=p["section_count"], voice_count=p["voice_count"],
+            **{name: p[name] for name in FRACTIONS},
             visualization_enabled=False, debug_mode=False)
         with contextlib.redirect_stderr(io.StringIO()):  # tqdm progress bar
             composer = CreativeComposer(cp)

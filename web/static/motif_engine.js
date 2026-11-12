@@ -66,12 +66,13 @@ function homophonic(m, v) {
     m.emotion, m.history);
 }
 
-function polyphonic(m, v) {
+// tonic = pitch class of the home key: the tonic triad decides between a third and a fourth
+function polyphonic(m, v, py, tonic) {
   if (v === 0) return m;
   if (v >= 4) return null;
   return motif(m.notes.map(n => {
-    const p = n.pitch;
-    const off = v % 2 === 0 ? (PERFECT.has(mod12(p)) ? 4 : 3) : (PERFECT.has(mod12(p)) ? -3 : -4);
+    const p = n.pitch, inTriad = PERFECT.has(mod12(p - tonic));
+    const off = v % 2 === 0 ? (inTriad ? 4 : 3) : (inTriad ? -3 : -4);
     return note(p + off + v * 2, n.duration * (v === 2 ? 1.5 : 0.75), Math.max(40, n.velocity - 15), n.articulation,
       n.performance);
   }), m.emotion, m.history);
@@ -117,8 +118,8 @@ const HANDLERS = {
 };
 
 // transform_for_voice(motif, voice_idx, texture)
-export function transformForVoice(m, v, texture, py) {
+export function transformForVoice(m, v, texture, py, tonic = 0) {
   if (!m) return null;
   const h = HANDLERS[texture];
-  return h ? h(m, v, py) : null;
+  return h ? h(m, v, py, tonic) : null;
 }

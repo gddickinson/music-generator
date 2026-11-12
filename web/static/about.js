@@ -15,6 +15,9 @@ route('about', () => {
     <li><b>Development.</b> Motifs are inverted, reversed, augmented, diminished, fragmented or phase-shifted.</li>
     <li><b>Texture.</b> Each section's texture turns a motif into up to four voices: monophonic, homophonic (parallel
       voices below), polyphonic, heterophonic (ornamented copies) or contrapuntal (consonant counter-lines).</li>
+    <li><b>Key and timing.</b> Melodies are built on the home key's tonic; a section in another key (the sonata's
+      dominant, a modulation) is transposed there. All motifs of a section start together and the next section starts
+      where its last note ends, all in beats.</li>
     <li><b>MIDI.</b> Every voice is a MIDI track and channel; tempo changes per section.</li>
   </ol>
   <h2>What the web version covers</h2>
@@ -25,9 +28,10 @@ route('about', () => {
   number (<code>fractal_quirks.js</code>). Playback and the WAV download use a small browser synth; the Python
   composer itself writes MIDI only. <code>main_composer.py</code> (genetic algorithms, harmony engine, WAV synthesis)
   and <code>multi_fractal_music.py</code> are not part of the web version.</p>
-  <p>Settings the composer accepts but does not use for the notes: <b>key</b> only labels the sections (melodies
-  always start from middle C), and <code>development_complexity</code>, <code>texture_density</code> and
-  <code>modulation_frequency</code> are stored but not read, so the web page leaves them out.</p>
+  <p>The three 0-to-1 settings: <b>development complexity</b> sets how many development steps a motif goes through
+  (1 to 4), <b>texture density</b> the share of accompanying voices that play (0 = the melody alone), and
+  <b>modulation frequency</b> the chance that a later section in the home key moves to the dominant, subdominant or
+  relative minor. Rondo, theme and variations and fugue have no plan of their own yet and use the mixed form.</p>
   <h2>Run it</h2>
   <h3>Python composer</h3>
   <pre>pip install -r requirements.txt

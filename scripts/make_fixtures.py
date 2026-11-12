@@ -31,6 +31,12 @@ CASES = [{"form": f, "seed": s} for f in FORMS for s in (0, 7)] + [
     {"form": "moment", "seed": 123456, "mode": "lydian", "section_count": 12, "voice_count": 1, "base_tempo": 200},
     {"form": "process", "seed": 5, "mode": "phrygian", "section_count": 3, "voice_count": 3, "base_tempo": 45},
     {"form": "sonata", "seed": 11, "mode": "mixolydian", "key": "F#", "voice_count": 8},
+    {"form": "sonata", "seed": 21, "key": "Bb", "development_complexity": 1.0, "texture_density": 1.0,
+     "modulation_frequency": 1.0},
+    {"form": "mixed", "seed": 8, "key": "E", "development_complexity": 0.625, "texture_density": 0.5,
+     "modulation_frequency": 0.75, "section_count": 10, "voice_count": 5},
+    {"form": "arch", "seed": 13, "key": "F#", "development_complexity": 0.0, "texture_density": 0.0,
+     "modulation_frequency": 0.0},
     {"form": "through_composed", "seed": 99, "mode": "aeolian",
      "emotional_journey": ["melancholic", "dark", "dark", "ethereal", "peaceful", "joyful", "energetic", "dark"]},
 ]

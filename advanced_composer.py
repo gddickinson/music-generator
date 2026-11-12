@@ -22,7 +22,7 @@ from harmony_engine import HarmonyParams, HarmonyEngine, HarmonyStyle
 from musical_types import (
     MusicalForm, Articulation, TextureType, DevelopmentType,
     PerformanceDirective, Note, Motif, Section, Form,
-    CreativeComposerParams
+    CreativeComposerParams, KEY_SEMITONES, transposition
 )
 from motif_development import MotifDevelopment
 from voice_leading import VoiceLeading
@@ -36,6 +36,11 @@ class CreativeComposer:
                 "WAV output is not implemented for CreativeComposer (it writes MIDI only); "
                 "render the MIDI file, or use main_composer.py / multi_fractal_music.py, "
                 "which synthesise WAV audio")
+        if params.key not in KEY_SEMITONES:
+            raise ValueError(f"unknown key {params.key!r}; use one of {', '.join(KEY_SEMITONES)}")
+        for name in ("development_complexity", "texture_density", "modulation_frequency"):
+            if not 0.0 <= getattr(params, name) <= 1.0:
+                raise ValueError(f"{name} must be between 0 and 1")
         self.params = params
         self.voice_leading = VoiceLeading()
         self.motif_development = MotifDevelopment()
@@ -55,7 +60,8 @@ class CreativeComposer:
         self.fractal_generator = FractalMelodyGenerator(
             MelodyParams(
                 mode=self.params.mode,
-                emotion=self.params.emotional_journey[0]
+                emotion=self.params.emotional_journey[0],
+                base_note=60 + transposition('C', self.params.key)  # tonic of the home key
             )
         )
 
@@ -227,7 +233,8 @@ class CreativeComposer:
                 available_transforms.append(DevelopmentType.FRAGMENTATION)
 
             # Apply 2-3 transformations
-            for _ in range(random.randint(2, 3)):
+            steps = self._max_development_steps()
+            for _ in range(random.randint(max(1, steps - 1), steps)):
                 transform_type = random.choice(available_transforms)
 
                 if transform_type == DevelopmentType.FRAGMENTATION and len(transformed.notes) >= 8:
@@ -328,6 +335,19 @@ class CreativeComposer:
         current = key_to_number[key]
         dominant = (current + 7) % 12
         return number_to_key[dominant]
+
+    def _get_subdominant_key(self, key: str) -> str:
+        """Get the subdominant key (a fourth up) for a given key"""
+        number_to_key = {v: k for k, v in KEY_SEMITONES.items()}
+        return number_to_key[(KEY_SEMITONES[key] + 5) % 12]
+
+    def _max_development_steps(self) -> int:
+        """Most development steps per motif: 1 (complexity 0) to 4 (complexity 1)."""
+        return max(1, round(self.params.development_complexity * 4))
+
+    def _active_voices(self) -> int:
+        """Voices that play: the melody plus texture_density of the accompanying voices."""
+        return 1 + round(self.params.texture_density * (self.params.voice_count - 1))
 
     def _get_relative_minor(self, key: str) -> str:
         """Get the relative minor key for a given major key"""
@@ -809,7 +829,7 @@ class CreativeComposer:
 
             # Apply multiple development techniques
             transformed = motif
-            for _ in range(random.randint(1, 3)):
+            for _ in range(random.randint(1, self._max_development_steps())):
                 # Choose appropriate transformation based on motif length
                 available_transforms = [DevelopmentType.AUGMENTATION, DevelopmentType.DIMINUTION]
 
@@ -878,6 +898,15 @@ class CreativeComposer:
             # Set tempo for section
             midi.addTempo(0, current_time, section.tempo)
 
+            # Later sections still in the home key may modulate to a related key
+            if (section_idx > 0 and section.key == self.params.key
+                    and random.random() < self.params.modulation_frequency):
+                section.key = random.choice([self._get_dominant_key(self.params.key),
+                                             self._get_subdominant_key(self.params.key),
+                                             self._get_relative_minor(self.params.key)])
+            # Notes are built in the home key; transpose them to the section's key
+            self._transpose = transposition(self.params.key, section.key)
+
             section_tension = self.calculate_section_tension(section)
             tension_values.append(section_tension)
             section_end = current_time
@@ -889,7 +918,7 @@ class CreativeComposer:
                           f"({len(motif.notes)} notes)")
 
                 # Process each voice
-                for voice_idx in range(self.params.voice_count):
+                for voice_idx in range(self._active_voices()):
                     # Apply voice-specific transformations
                     transformed_motif = self.transform_for_voice(
                         motif, voice_idx, section.texture
@@ -970,10 +999,12 @@ class CreativeComposer:
                 original_pitch = note.pitch[0] if isinstance(note.pitch, (list, tuple)) else note.pitch
 
                 # Alternate between parallel and contrary motion
+                # (tonic triad of the home key: notes are built in it, then transposed)
+                in_triad = (original_pitch - KEY_SEMITONES[self.params.key]) % 12 in [0, 4, 7]
                 if voice_idx % 2 == 0:
-                    pitch_offset = 4 if original_pitch % 12 in [0, 4, 7] else 3
+                    pitch_offset = 4 if in_triad else 3
                 else:
-                    pitch_offset = -3 if original_pitch % 12 in [0, 4, 7] else -4
+                    pitch_offset = -3 if in_triad else -4
 
                 new_notes.append(Note(
                     pitch=original_pitch + pitch_offset + (voice_idx * 2),
@@ -1113,7 +1144,7 @@ class CreativeComposer:
             try:
                 # Extract and validate pitch
                 pitch = note.pitch[0] if isinstance(note.pitch, (list, tuple)) else note.pitch
-                pitch = int(pitch)  # Convert to integer
+                pitch = int(pitch) + getattr(self, '_transpose', 0)  # section key
 
                 # Ensure pitch is in valid MIDI range (0-127)
                 pitch = max(0, min(127, pitch))
