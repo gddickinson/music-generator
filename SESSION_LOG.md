@@ -20,13 +20,19 @@ Python exactly: 28 fixture pieces (20,332 notes, all MIDI bytes) in the node tes
 data table comes from Python: 11 fractal cells where SciPy's float savgol rounds below a whole number
 (`fractal_quirks.js`); `tests/test_fixtures_current.py` skips (not fails) if another platform rounds those differently.
 
-**Open questions for George**:
-- Section timing: `calculate_section_duration` divides beats by tempo/60 ("seconds") but the result is used as MIDI
-  beats, and time advances by the whole section length after *every* motif. Sections overlap (the cause of the crash
-  above) or leave long gaps (sonata development). Fixing it would change every piece.
-- `key` has no effect on pitches (melodies always start at middle C); `development_complexity`, `texture_density` and
-  `modulation_frequency` are never read; rondo/theme-and-variations/fugue fall back to mixed.
-- `multi-fractal-music.py` is an identical copy of `multi_fractal_music.py`; `advanced_composer.py` duplicates the
-  split modules.
+**Open questions for George** (resolved in the follow-up below).
 
 No Mac mini use.
+
+
+## 2026-11-11 (follow-up, approved by George via the lead)
+
+- Home page overflowed 390 px by 145 px when first drawn at desktop width and then narrowed: grid children may now
+  shrink, the roll scrolls in its own box and redraws on resize. Checked at 390 px on every route (fresh and resized).
+- Duplicates removed: `advanced_composer.py` imports the split modules (about 490 lines removed, output byte-identical
+  for 11 forms x 4 seeds); `multi-fractal-music.py` deleted (nothing imported it).
+- Section timing in beats: motifs of a section start together; the next section starts where the last note ends.
+  Every piece changes (accepted). Test: sections tile the timeline exactly for every form.
+- `key`, `development_complexity`, `texture_density`, `modulation_frequency` now affect the notes (see
+  musical_types.py); the polyphonic voice uses the home key's tonic triad. Tests for each.
+- JS engine and fixtures updated: 31 pieces, 16,686 notes, all MIDI bytes identical to the Python.
